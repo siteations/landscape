@@ -1,0 +1,24 @@
+{
+  "name": "landscape",
+  "version": "1.0.0",
+  "description": "interactive version of landscape drawings",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/siteations/landscape.git"
+  },
+  "keywords": [
+    "landscape-dynamics",
+    "landscape",
+    "visualization"
+  ],
+  "author": "meg studer",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/siteations/landscape/issues"
+  },
+  "homepage": "https://github.com/siteations/landscape#readme"
+}
