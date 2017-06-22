@@ -1,18 +1,43 @@
+body {
+	font-family: "Roboto";
+}
+
 svg {
 	position:absolute;
 	top: 0px;
 	left: 0px;
 }
 
-.red {
-	fill: #c1272d;
+.pulseButton {
 	stroke: #fff;
 	stroke-width: 2px;
 	fill-opacity: .1;
 	animation-name: buttonpulse;
 	animation-delay: 4s;
-  animation-duration: 4s;
-  animation-iteration-count: 3;
+  animation-duration: 2s;
+  animation-iteration-count: 5;
+  animation-direction: alternate;
+  animation-fill-mode: forwards;
+}
+
+.hero {
+	color: #fff;
+	position:absolute;
+	top: 100px;
+	left: 100px;
+	font-size: 3em;
+}
+
+.purple {
+	fill: #800080;
+}
+
+.mustard {
+	fill: #f4b84d;
+}
+
+.red {
+	fill: #c1272d;
 }
 
 #color-underlay {
@@ -31,7 +56,6 @@ svg {
 
 @keyframes buttonpulse {
     0%   {fill-opacity:0.1;}
-    50%  {fill-opacity:.75;}
-    100% {fill-opacity:0.1;}
+    100%  {fill-opacity:.75;}
 }
 
