@@ -1,12 +1,27 @@
+
+
 body {
 	font-family: "texta";
 	overflow: hidden ;
 }
 
+.pgTitle {
+  font-family: "eveleth";
+  padding-top: 5px;
+  margin-bottom: 0px;
+}
+
+.texta {
+  font-family: "texta";
+}
+
+.eveleth {
+  font-family: "eveleth";
+}
+
+
 svg {
-	position:absolute;
-	top: 0px;
-	left: 0px;
+
 }
 
 .pulse {
@@ -46,3 +61,33 @@ svg {
 .hidden {
 	opacity: 0;
 }
+
+.header {
+  padding: 5px;
+  width: 101%;
+  background-color: #ffffff;
+  opacity: .9;
+  position: absolute;
+  top:0px;
+  left:0px;
+}
+
+.footer {
+  padding: 5px;
+  width: 101%;
+  background-color: #ffffff;
+  opacity: .9;
+  position: absolute;
+  bottom:0px;
+  left:0px;
+}
+
+.rightModal {
+  margin-right: 20px;
+    margin-top: 80px;
+}
+
+.bottomModal {
+    margin-top: 450px;
+}
+
