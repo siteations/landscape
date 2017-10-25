@@ -1,4 +1,8 @@
-var state = 'load'
+var state = 'poster'
+var prev = 'poster'
+
+var menuTop=jsonData.menuTop
+var menuBottom=jsonData.menuBottom
 
 $(document).ready(()=> {
 
@@ -7,8 +11,7 @@ $(document).ready(()=> {
 	//add your svg compositions, svg secondary elements, and linked data (csv or json)
 	var loadSvg = $.get('./img/sectionPlan-01.svg')
 	var loadIcons = $.get('./img/opening-1.svg')
-	var loadCSV = $.get('./data/test.csv')
-	var loadJSON = $.get('./data/test.json')
+	var loadCSV = $.get('./data/test.csv') // and so on... we're not using this but you get the idea
 
 
 	//this is asynchronous so we use $.when().done() to collect data once all are loaded
@@ -17,7 +20,7 @@ $(document).ready(()=> {
 //----------------ONCE LOADED (defered) grab their data with $.when().done()----------------------
 
 
-	$.when(loadSvg, loadIcons, loadCSV, loadJSON).done( (svgData, iconData, csvData, jsonData) => {
+	$.when(loadSvg, loadIcons, loadCSV).done( (svgData, iconData, csvData) => {
 
 		//note the data structure from done includes 3 things... we want to work with [0]
 			console.log("response structure",  svgData)
@@ -26,7 +29,7 @@ $(document).ready(()=> {
 			console.log("svg",  svgData[0].documentElement)
 			console.log("icons",  iconData[0].documentElement)
 			console.log("elements-csv",  csvData[0].split('\r').map(line=>line.split(',')) )
-			console.log("elements-json",  jsonData[0])
+
 
 			console.log("width",  $(window))
 
@@ -34,16 +37,12 @@ $(document).ready(()=> {
 		var svg = svgData[0].documentElement
 		svg.setAttribute('class', 'center-block')
 
-		var menuTop=jsonData[0].menuTop
-
 		//add svg to the html
 		$('#svgHere').append(svg)
 
-		manifesto()
+		loadPoster()
+		topMenuLoad(menuTop, menuBottom)
 
-		topMenuActions(menuTop)
-
-		listening()
 
 
 	}); //.done()
@@ -75,21 +74,6 @@ const visHide = function (arr, sel){
 	})
 }
 
-//Task: fadeOut all layers with selections in array
-const visFade = function (arr, sel){
-	var prefix;
-	if (sel==='id'){prefix='#'} else if (sel==='class'){prefix='.'} else if (sel==='tag'){prefix=''}
-
-	arr.forEach(item=>{
-		$(prefix+item).fadeOut(1000)
-	})
-}
-
-//Task: add class to children of a group - makes for easier selection of items... esp. tooltip, click, and fill interactions
-const visClass = function (group){
-
-}
-
 //Task: add tooltips to all layers with selections in array ... this is an array of objects
 const visTool = function (arr, sel){
 	var prefix;
@@ -103,7 +87,23 @@ const visTool = function (arr, sel){
 
 //-----------TASKS BY AREAS--------------------------
 
-const topMenuActions = function (obj){
+
+//-----------------Set Initial Visibility of Image--------------------------
+const loadPoster = function(){
+		//turn everything on again within layered, named svg
+		visInit()
+
+		//initial layer manipulation - hide or fade off specific layers...
+		$('#slideImage1').attr('xlink:href', "../img/manifesto.jpg")
+		$('#slideImage1').attr('style', "")
+
+		//set up initial visibilities
+		visHide(['plan', 'section1', 'section2', 'scale_and_north', 'slideImage2'], 'id')
+}
+
+
+//-----------Update options based on top menu (add in additional functions here)--------------------------
+const topMenuLoad = function (obj, objstates){
 	var buttonIds = Object.keys(obj)
 
 	buttonIds.forEach(btn=>{
@@ -114,9 +114,12 @@ const topMenuActions = function (obj){
 			$('#pgChoice').text(btn.replace('Btn', ''))
 			$('.bottomMenu').remove()
 
+			layerOptions(obj[btn][0].id)
+
+
 			interArr.forEach(item=>{
 				var newDiv = document.createElement("div")
-					newDiv.setAttribute('class', 'col text-center bottomMenu')
+					if (item.icon) {newDiv.setAttribute('class', 'col-1 text-center bottomMenu') } else {newDiv.setAttribute('class', 'col text-center bottomMenu')}
 
 				var newBtn = document.createElement("button")
 					newBtn.setAttribute('class', 'btn btn-outline-secondary btn-block')
@@ -129,6 +132,8 @@ const topMenuActions = function (obj){
 				newDiv.append(newBtn)
 
 				$('.footer').append(newDiv)
+				$(`#${item.id}`).click(event=>layerOptions(event.target.id))
+
 			})
 
 		})
@@ -136,58 +141,153 @@ const topMenuActions = function (obj){
 
 }
 
-const manifesto = function(){
-		//turn everything on again within layered, named svg
-		visInit()
 
-		//initial layer manipulation - hide or fade off specific layers...
-		$('#slideImage1').attr('xlink:href', "../img/manifesto.jpg")
-		$('#slideImage1').click((event)=>{
-			$('#bottomModalBody').text('explain the demo here')
-			$('#bottomModal').modal('show')
+// checks based on the bottom menu buttons as listed in the json series of objects
+
+const altVisibility = function(objId){
+	var toHide = menuBottom[objId].fade.layers
+
+	//which layers are currently hidden
+	var layers = $('g[id]')
+	var offArray = layers.map(id=> {
+			if (layers[id].style.cssText === 'display: none;'){
+				return layers[id].id
+			}
 		})
-		//set up initial visibilities
-		visHide(['plan', 'section1', 'section2', 'scale_and_north', 'slideImage2'], 'id')
-}
+	var isHidden = [].slice.call(offArray)
 
-const listening = function (){
+	//compare and filter
+	var fadeOutIds = toHide.filter(id=> isHidden.indexOf(id) === -1)
+	var fadeInIds = isHidden.filter(id=> toHide.indexOf(id) === -1)
 
-	$('#homeBtn').click(event=>{
-		manifesto()
-	});
-
-	$('#posterOpt').click(event=>{
-		manifesto()
-	});
-
-	$('#aboutOpt').click(event=>{
-		manifesto()
-		$('#bottomModalBody').text('explain the demo here also')
-		$('#bottomModal').modal('show')
-	});
-
-	$('#s1Opt').click(event=>{
-		visInit()
-		visHide(['images', 'section2', 'diagrams'], 'id')
-	});
-
-	$('#s2Opt').click(event=>{
-		visInit()
-		visHide(['images', 'section1', 'diagrams'], 'id')
-	});
-
-	$('#siteBtn').click(event=>{
-		visInit()
-		visHide(['section1', 'diagrams', 'plan', 'section2', 'scale_and_north'], 'id')
-		$('#slideImage1').attr('xlink:href', "../img/slide01.jpg")
-
-	});
+	fadeOutIds.forEach(id=>$(`#${id}`).fadeOut(500))
+	fadeInIds.forEach(id=>$(`#${id}`).fadeIn(500))
 
 }
 
-//Task: get IDs of sublayers as array- useful for creating dropdown selections
+const altActions = function(objId){
+	if (menuBottom[objId].click){
+		var actionLayers = menuBottom[objId].click.layers
+		var actionActions = menuBottom[objId].click.actions
 
-//Task: show one layer, hide others in array
+		actionLayers.forEach((layer,i)=>{
+			if (actionActions[i].show){
+				$(`#${layer}`).off('click')
+				$(`#${layer}`).click(()=>$(`#${actionActions[i].show}`).modal('show'))
+			} else if (actionActions[i].fadeIn){
 
-//
+			} else if (actionActions[i].fadeOut){
+
+			} else if (actionActions[i].fill){ // plan only - empty others, fill species type
+
+			} else if (actionActions[i].advance){ // slides only
+				$(`#${layer}`).off('click')
+				$(`#${layer}`).click(()=>slideshow('slideStart', 'adv'))
+			} else if (actionActions[i].reverse){ // slides only
+				$(`#${layer}`).off('click')
+				$(`#${layer}`).click(()=>slideshow('slideStart', 'rev'))
+			}
+		})
+
+	}
+
+}
+
+
+
+const slideshow = function(objId, direction){
+	var arr = menuBottom[objId].photos.img
+	var texts = menuBottom[objId].photos.captions
+	var modals = menuBottom[objId].photos.modals
+	var current;
+	var next;
+
+	var sl1 = $('#slideImage1').attr('style')
+	var sl2 = $('#slideImage2').attr('style')
+
+	if (sl1 !=='display: none;'){
+		current = arr.indexOf($('#slideImage1').attr('xlink:href'));
+		if (direction=== 'adv'){
+			next = current + 1
+			if (next> arr.length-1){next = 0}
+		} else {
+			next = current - 1
+			if (next< 0){next = arr.length-1}
+		}
+
+
+		$('#slideImage2').attr('xlink:href', arr[next])
+		$('#slideImage2').show()
+		$('#slideImage1').fadeOut(1000)
+		//$('#slideCaption').text('above: '+texts[next])
+		$('#rightModalBody').text('in advance of text: '+modals[next])
+		$('#rightModal').modal('show')
+
+	} else if (sl1 ==='display: none;'){
+
+		current = arr.indexOf($('#slideImage2').attr('xlink:href'));
+		if (direction=== 'adv'){
+			next = current + 1
+			if (next> arr.length-1){next = 0}
+		} else {
+			next = current - 1
+			if (next< 0){next = arr.length-1}
+		}
+
+		$('#slideImage1').attr('xlink:href', arr[next])
+		$('#slideImage1').fadeIn(1000)
+		//$('#slideCaption').text('above: '+texts[next])
+		$('#rightModalBody').text('in advance of text: '+modals[next])
+		$('#rightModal').modal('show')
+	}
+}
+
+const altContent = function(objId, clickNest){
+	console.log(menuBottom[objId], objId)
+
+	if (menuBottom[objId].updates && !clickNest){
+		var toEdit = menuBottom[objId].updates.layers
+		var edits = menuBottom[objId].updates.contents
+	} else if (clickNest){
+		var toEdit = menuBottom[objId].click.updates.layers
+		var edits = menuBottom[objId].click.updates.contents
+	}
+
+	if (menuBottom[objId].updates || clickNest){
+		toEdit.forEach((edit,i)=>{
+			if (typeof(edits[i])==='string'){
+				$(`#${edit}`).text(edits[i])
+			} else if (Array.isArray(edits[i]) && edits[i].length===2){
+				$(`#${edit}`).attr(edits[i][0],edits[i][1])
+			} else if (Array.isArray(edits[i]) && edits[i].length>2){ // for complex modals
+				// add later for plant info based on icons
+			}
+		})
+
+	}
+}
+
+const altShow = function(objId){
+	if (menuBottom[objId].show){
+		$(`#${menuBottom[objId].show}`).modal('show')
+	}
+}
+
+const altTooltips = function(objId){
+
+}
+
+
+//-----------master function for tiggering & adding events from the bottom menu----------------
+const layerOptions = function(objId){ //event.target.id
+	console.log(objId)
+	altVisibility(objId)
+	altContent(objId, null)
+	altTooltips(objId)
+	altActions(objId)
+	altShow(objId)
+}
+
+
+
 
