@@ -98,7 +98,7 @@ const loadPoster = function(){
 		$('#slideImage1').attr('style', "")
 
 		//set up initial visibilities
-		visHide(['plan', 'section1', 'section2', 'scale_and_north', 'slideImage2'], 'id')
+		visHide(['plan', 'section1', 'section2', 'scale_and_north', 'slideImage2', 'overlays'], 'id')
 }
 
 
@@ -116,10 +116,14 @@ const topMenuLoad = function (obj, objstates){
 
 			layerOptions(obj[btn][0].id)
 
+			newDiv = document.createElement("div")
+			newDiv.setAttribute('class', 'col-2 text-center bottomMenu')
+			$('.footer').prepend(newDiv)
+
 
 			interArr.forEach(item=>{
 				var newDiv = document.createElement("div")
-					if (item.icon) {newDiv.setAttribute('class', 'col-1 text-center bottomMenu') } else {newDiv.setAttribute('class', 'col text-center bottomMenu')}
+				newDiv.setAttribute('class', 'col text-center bottomMenu')
 
 				var newBtn = document.createElement("button")
 					newBtn.setAttribute('class', 'btn btn-outline-secondary btn-block')
@@ -273,9 +277,36 @@ const altShow = function(objId){
 	}
 }
 
-const altTooltips = function(objId){
+const altPositions = function(objId){
+	if (menuBottom[objId].animateMPosition){
+		$(`svg`).off('mousemove')
+		$(`svg`).mousemove((event)=>{
+			var x = event.pageX;
+			var y = event.pageY;
+
+  		$(`#${menuBottom[objId].animateMPosition}`).attr('cx', x +'px')
+  		$(`#${menuBottom[objId].animateMPosition}`).attr('cy', y +'px')
+		})
+	}
+}
+
+const altAnimateClip = function(objId){
+		if (menuBottom[objId].animateClip){
+		var width = 1107
+		$(`#${menuBottom[objId].animateClip}`).attr('width', '0')
+		$(`svg`).mouseenter(()=>{
+				$(`#${menuBottom[objId].animateClip}`).animate({
+						width: width
+				}, 3000)
+			$(`svg`).off('mouseenter')
+		})
+	}
 
 }
+
+const altTooltips = function(objId){
+}
+
 
 
 //-----------master function for tiggering & adding events from the bottom menu----------------
@@ -286,6 +317,8 @@ const layerOptions = function(objId){ //event.target.id
 	altTooltips(objId)
 	altActions(objId)
 	altShow(objId)
+	altPositions(objId)
+	altAnimateClip(objId)
 }
 
 
