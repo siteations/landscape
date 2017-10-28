@@ -94,8 +94,7 @@ const loadPoster = function(){
 		visInit()
 
 		//initial layer manipulation - hide or fade off specific layers...
-		$('#slideImage1').attr('xlink:href', "../img/manifesto.jpg")
-		$('#slideImage1').attr('style', "")
+		$('#slideImage1').attr('xlink:href', "../img/manifesto.jpg").attr('style', "")
 
 		//set up initial visibilities
 		visHide(['plan', 'section1', 'section2', 'scale_and_north', 'slideImage2', 'overlays'], 'id')
@@ -176,8 +175,7 @@ const altActions = function(objId){
 
 		actionLayers.forEach((layer,i)=>{
 			if (actionActions[i].show){
-				$(`#${layer}`).off('click')
-				$(`#${layer}`).click(()=>$(`#${actionActions[i].show}`).modal('show'))
+				$(`#${layer}`).off('click').click(()=>$(`#${actionActions[i].show}`).modal('show'))
 			} else if (actionActions[i].fadeIn){
 
 			} else if (actionActions[i].fadeOut){
@@ -185,11 +183,9 @@ const altActions = function(objId){
 			} else if (actionActions[i].fill){ // plan only - empty others, fill species type
 
 			} else if (actionActions[i].advance){ // slides only
-				$(`#${layer}`).off('click')
-				$(`#${layer}`).click(()=>slideshow('slideStart', 'adv'))
+				$(`#${layer}`).off('click').click(()=>slideshow('slideStart', 'adv'))
 			} else if (actionActions[i].reverse){ // slides only
-				$(`#${layer}`).off('click')
-				$(`#${layer}`).click(()=>slideshow('slideStart', 'rev'))
+				$(`#${layer}`).off('click').click(()=>slideshow('slideStart', 'rev'))
 			}
 		})
 
@@ -220,11 +216,10 @@ const slideshow = function(objId, direction){
 		}
 
 
-		$('#slideImage2').attr('xlink:href', arr[next])
-		$('#slideImage2').show()
+		$('#slideImage2').attr('xlink:href', arr[next]).show()
 		$('#slideImage1').fadeOut(1000)
-		//$('#slideCaption').text('above: '+texts[next])
-		$('#rightModalBody').text('in advance of text: '+modals[next])
+
+		$('#rightModalBody').text('in advance of text: '+ modals[next])
 		$('#rightModal').modal('show')
 
 	} else if (sl1 ==='display: none;'){
@@ -238,9 +233,7 @@ const slideshow = function(objId, direction){
 			if (next< 0){next = arr.length-1}
 		}
 
-		$('#slideImage1').attr('xlink:href', arr[next])
-		$('#slideImage1').fadeIn(1000)
-		//$('#slideCaption').text('above: '+texts[next])
+		$('#slideImage1').attr('xlink:href', arr[next]).fadeIn(1000)
 		$('#rightModalBody').text('in advance of text: '+modals[next])
 		$('#rightModal').modal('show')
 	}
@@ -279,32 +272,84 @@ const altShow = function(objId){
 
 const altPositions = function(objId){
 	if (menuBottom[objId].animateMPosition){
-		$(`svg`).off('mousemove')
-		$(`svg`).mousemove((event)=>{
+		var pos = menuBottom[objId].animateMPosition
+
+		$(`svg`).off('mousemove').mousemove((event)=>{
 			var x = event.pageX;
 			var y = event.pageY;
 
-  		$(`#${menuBottom[objId].animateMPosition}`).attr('cx', x +'px')
-  		$(`#${menuBottom[objId].animateMPosition}`).attr('cy', y +'px')
+  		$(`#${pos}`).attr('cx', x +'px')
+  		$(`#${pos}`).attr('cy', y +'px')
 		})
 	}
 }
 
 const altAnimateClip = function(objId){
 		if (menuBottom[objId].animateClip){
-		var width = 1107
-		$(`#${menuBottom[objId].animateClip}`).attr('width', '0')
-		$(`svg`).mouseenter(()=>{
-				$(`#${menuBottom[objId].animateClip}`).animate({
-						width: width
-				}, 3000)
-			$(`svg`).off('mouseenter')
-		})
+			var anim = menuBottom[objId].animateClip
+
+			if (anim.width){
+			$(`#${anim.layer}`).css('width', '0px').animate({
+							width: anim.width
+					}, anim.duration)
+			} else if (anim.height){
+				$(`#${anim.layer}`).css('height', '0px').animate({
+							height: anim.height
+					}, anim.duration)
+
+			}
 	}
 
 }
 
 const altTooltips = function(objId){
+	if (menuBottom[objId].tooltip){
+		var tt = menuBottom[objId].tooltip.contents
+		menuBottom[objId].tooltip.layers.forEach((layer,i)=>{
+			menuBottom[objId].tooltip.type.forEach(item =>{
+				$(`#${layer}`).find(item).attr('pointer-event', 'all').addClass('stroke_'+layer)
+			})
+
+			var tooltip = document.createElementNS("http://www.w3.org/2000/svg",'text')
+				tooltip.setAttribute('id', 'stroke_'+layer+'_tt')
+				tooltip.setAttribute('class', 'text-tt')
+				tooltip.append(tt[i])
+
+			var under = document.createElementNS("http://www.w3.org/2000/svg",'rect')
+				under.setAttribute('id', 'stroke_'+layer+'_rect')
+				under.setAttribute('class', 'rect-tt')
+
+			$(`#${menuBottom[objId].tooltip.overlay}`).append(under).append(tooltip)
+
+			$(`.stroke_${layer}`).hover((event)=>{
+					$(`#stroke_${layer}_tt`).attr('x', event.pageX).attr('y', event.pageY-10)
+
+				var inher = $(`#stroke_${layer}_tt`)[0].textLength.baseVal.value+10
+					$(`#stroke_${layer}_rect`).attr('x', event.pageX-5).attr('y', event.pageY-28).attr('width', inher)
+
+			}, (event)=>{
+				$(`#stroke_${layer}_tt`).attr('x', '').attr('y', '')
+				$(`#stroke_${layer}_rect`).attr('x', '').attr('y', '').attr('width', '')
+			})
+
+		})
+
+	}
+}
+
+const altIsolate=function(objId){
+	if (menuBottom[objId].isolate){
+		var iso = menuBottom[objId].isolate
+
+		iso.layers.forEach((layer,i)=>{
+			$(`#${layer}`).hover(()=>{
+				iso.affected[i].forEach(item=>$(`#${item}`).fadeOut(iso.duration))
+			}, ()=>{
+				iso.affected[i].forEach(item=>$(`#${item}`).fadeIn(iso.duration))
+			})
+		})
+
+	}
 }
 
 
@@ -314,11 +359,12 @@ const layerOptions = function(objId){ //event.target.id
 	console.log(objId)
 	altVisibility(objId)
 	altContent(objId, null)
-	altTooltips(objId)
 	altActions(objId)
 	altShow(objId)
 	altPositions(objId)
 	altAnimateClip(objId)
+	altTooltips(objId)
+	altIsolate(objId)
 }
 
 

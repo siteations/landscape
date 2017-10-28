@@ -16,8 +16,8 @@ var jsonData = {
             {"name": "show process", "id":"iProcess"}
         ],
         "programBtn":[
-            {"name": "show water levels", "id":"dWater"},
             {"name": "show trails", "id":"dTrails"},
+            {"name": "show water levels", "id":"dWater"},
             {"name": "show occupancy", "id":"dCamp"}
             ],
         "seasonsBtn":[
@@ -57,6 +57,10 @@ var jsonData = {
             fade: {layers:['plan', 'section1', 'section2', 'scale_and_north','overlays'], type:'id'},
             click: {layers:['slideNext', 'slideLast'], actions:[{advance: 'slideImage1'},{reverse: 'slideImage1'}]},
         },
+        slideLast: {
+            fade: {layers:['plan', 'section1', 'section2', 'scale_and_north','overlays'], type:'id'},
+            click: {layers:['slideNext', 'slideLast'], actions:[{advance: 'slideImage1'},{reverse: 'slideImage1'}]},
+        },
         iFlora: {
             fade: [],
             tooltip: [],
@@ -73,14 +77,18 @@ var jsonData = {
             click: []
         },
         dWater: {
-            fade: {layers:['d_trails', 'd_camp','section1', 'cut2','images','plan_annoTextures','overlays'], type:'id'},
+            fade: {layers:['d_trails', 'd_camp','section1', 'diagrams_occ','cut2','images','plan_annoTextures','overlays'], type:'id'},
+            animateClip: {layer:'clip_flows', height:'782', duration:4000},
+            isolate: {layers: ['w_low'], affected: [['w_high', 'w_medium']], duration: 2000 }
         },
         dTrails: {
-            fade: {layers:['d_saturation', 'd_camp','section1', 'cut2','images', 'plan_annoTextures','overlays'], type:'id'},
-            animateClip: 'clip_trails',
+            fade: {layers:['w_flows', 'd_saturation', 'diagrams_occ','d_camp','section1', 'cut2','images', 'plan_annoTextures','overlays'], type:'id'},
+            animateClip: {layer:'clip_trails', width:'1107', duration:2000},
+            tooltip:{layers:['main_trail', 'secondary_trail', 'meanders_trail'], contents:['main: Bluebird Knob Trail', 'secondary: routes along Alder Run', 'meanders: to Alder Run Bog'], overlay:'d_trails', type:['path']}
         },
         dCamp: {
-            fade: {layers:['d_trails', 'd_saturation','section1', 'cut2','images', 'plan_annoTextures', 'overlays'], type:'id'},
+            fade: {layers:['w_flows', 'd_trails', 'd_saturation','section1', 'cut2','images', 'plan_annoTextures', 'overlays', 'program-peps'], type:'id'},
+            tooltip:{layers:['sleepingCap', 'waterEdge', 'shelterPlatform', 'firePit-2', 'ds_shelter', 'ds_sleeping', 'ds_edge', 'ds_fire'], contents:['room per sleeping bag', 'easy access for purification, refills', 'covered shelter with roof access/overlook', 'sunken pit for fires, overflow drains to bog at south', 'shelter: raised floor for times of flooding, roof access for star-gazing', 'tents and sleeping bags fill this area', 'access to stream (in wet seasons)', 'fire pit and socializing area intersecting/reinforcing dam wall'], overlay:'diagrams_occ', type:['path','polygon','rect', 'polyline']}
         },
         spring: {
             fade: {layers:['images', 'section2', 'icons1','cut1','diagrams', 'plan', 'render2', 'scale_and_north'], type:'id'},
@@ -88,7 +96,7 @@ var jsonData = {
             updates: {layers:['render1'], contents: [['xlink:href', "../img/sect1_SpringDay.jpg"]]}
         },
         fall: {
-            fade: {layers:['images', 'section1', 'cut2','diagrams', 'plan', 'render2', 'scale_and_north'], type:'id'},
+            fade: {layers:['images', 'section1', 'diagrams_occ','cut2','diagrams', 'plan', 'render2', 'scale_and_north'], type:'id'},
             animateMPosition: 'clip_renders',
             updates: {layers:['render1'], contents: [['xlink:href', "../img/sect2_FallDay.jpg"]]}
         },
