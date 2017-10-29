@@ -104,3 +104,7 @@ svg {
   rx:5;
   ry:5;
 }
+
+.imgTest {
+  display:none;
+}

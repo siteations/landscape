@@ -1,37 +1,53 @@
-var state = 'poster'
-var prev = 'poster'
+//throw some globals at the top
 
+var sig = 'cb723072f6870d58'
+var key = '74838237bffa820e9242c061634ec0dd'
+
+//breaking apart my master json into pieces
 var menuTop=jsonData.menuTop
 var menuBottom=jsonData.menuBottom
+var photoTags=jsonData.photoTags
+
+
+
 
 $(document).ready(()=> {
 
 //----------------LOAD your files with jQuery $.get----------------------
 
 	//add your svg compositions, svg secondary elements, and linked data (csv or json)
-	var loadSvg = $.get('./img/sectionPlan-01.svg')
-	var loadIcons = $.get('./img/opening-1.svg')
-	var loadCSV = $.get('./data/test.csv') // and so on... we're not using this but you get the idea
 
+		// your carefully executed drawings
+		var loadSvg = $.get('./img/sectionPlan-01.svg')
+		// do single api calls or multiple to bring in extra photos / data from flickr, etc,
+		var loadPhotoGen = $.get(`https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${key}&tags=${photoTags.general.replace(' ', '+')}&extras=url_sq%2C+url_l&per_page=150&page=1&format=json&nojsoncallback=1&api_signature=${sig}`)
+
+		//feel free to make arrays of these 'promises' awaiting fulfillment...
+		var treeCalls = jsonData.photoTags.flora.map((tree)=>{
+			return $.get(`https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${key}&tags=${tree.replace(' ', '+')}&extras=url_sq%2C+url_z&per_page=10&page=1&format=json&nojsoncallback=1&api_signature=${sig}`)
+		})
+		//and work with your favorite data types... we're not using this but you get the idea...
+		var loadCSV = $.get('./data/test.csv')
+
+
+	// set up array order in a way that makes sense for collecting later
+	var promiseArray = [loadSvg, loadPhotoGen, loadCSV].concat(treeCalls)
 
 	//this is asynchronous so we use $.when().done() to collect data once all are loaded
 	//for more info on sync vs. async/callback strutures and the alternatives of defers (in jQuery) / promises see MDN promises
 
 //----------------ONCE LOADED (defered) grab their data with $.when().done()----------------------
 
-
-	$.when(loadSvg, loadIcons, loadCSV).done( (svgData, iconData, csvData) => {
+	$.when(...promiseArray).done((svgData, photoData, csvData, ...trees) => {
 
 		//note the data structure from done includes 3 things... we want to work with [0]
 			console.log("response structure",  svgData)
 
 		//confirm what's in your files
 			console.log("svg",  svgData[0].documentElement)
-			console.log("icons",  iconData[0].documentElement)
+			console.log("flickr photos (first 25)",  photoData[0])
 			console.log("elements-csv",  csvData[0].split('\r').map(line=>line.split(',')) )
-
-
-			console.log("width",  $(window))
+			console.log("flickr trees", trees.map(tree=>tree[0]))
 
 		//set up an initial styling
 		var svg = svgData[0].documentElement
@@ -41,7 +57,11 @@ $(document).ready(()=> {
 		$('#svgHere').append(svg)
 
 		loadPoster()
-		topMenuLoad(menuTop, menuBottom)
+
+		var flickr = sortFlickrLarge(photoData[0])
+		console.log('working photos', flickr)
+
+		topMenuLoad(menuTop, flickr)
 
 
 
@@ -85,6 +105,27 @@ const visTool = function (arr, sel){
 	})
 }
 
+const sortFlickrLarge = function (json){
+	var photos = json.photos.photo
+
+	var photolinks = []
+	photos.forEach(photo=>{
+		var pic={}
+
+		if (photo.url_l && photo.title.split(' ').length>1){
+
+			pic.link = photo.url_l
+			pic.height = (1600/photo.width_l)*photo.height_l
+			pic.title = photo.title
+			photolinks.push(pic)
+		}
+
+	})
+
+	return photolinks
+}
+
+
 //-----------TASKS BY AREAS--------------------------
 
 
@@ -102,7 +143,7 @@ const loadPoster = function(){
 
 
 //-----------Update options based on top menu (add in additional functions here)--------------------------
-const topMenuLoad = function (obj, objstates){
+const topMenuLoad = function (obj, flickr){
 	var buttonIds = Object.keys(obj)
 
 	buttonIds.forEach(btn=>{
@@ -113,7 +154,7 @@ const topMenuLoad = function (obj, objstates){
 			$('#pgChoice').text(btn.replace('Btn', ''))
 			$('.bottomMenu').remove()
 
-			layerOptions(obj[btn][0].id)
+			layerOptions(obj[btn][0].id, flickr)
 
 			newDiv = document.createElement("div")
 			newDiv.setAttribute('class', 'col-2 text-center bottomMenu')
@@ -135,7 +176,7 @@ const topMenuLoad = function (obj, objstates){
 				newDiv.append(newBtn)
 
 				$('.footer').append(newDiv)
-				$(`#${item.id}`).click(event=>layerOptions(event.target.id))
+				$(`#${item.id}`).click(event=>layerOptions(event.target.id,  flickr))
 
 			})
 
@@ -152,12 +193,15 @@ const altVisibility = function(objId){
 
 	//which layers are currently hidden
 	var layers = $('g[id]')
+
 	var offArray = layers.map(id=> {
 			if (layers[id].style.cssText === 'display: none;'){
 				return layers[id].id
 			}
 		})
 	var isHidden = [].slice.call(offArray)
+
+	console.log(isHidden, $(':hidden')) // note how problematic jquery can be.... so you will need to craft your own selection mechanisms
 
 	//compare and filter
 	var fadeOutIds = toHide.filter(id=> isHidden.indexOf(id) === -1)
@@ -168,10 +212,11 @@ const altVisibility = function(objId){
 
 }
 
-const altActions = function(objId){
+const altActions = function(objId, flickr){
 	if (menuBottom[objId].click){
 		var actionLayers = menuBottom[objId].click.layers
 		var actionActions = menuBottom[objId].click.actions
+		var slideSource = menuBottom[objId].click.type
 
 		actionLayers.forEach((layer,i)=>{
 			if (actionActions[i].show){
@@ -183,9 +228,9 @@ const altActions = function(objId){
 			} else if (actionActions[i].fill){ // plan only - empty others, fill species type
 
 			} else if (actionActions[i].advance){ // slides only
-				$(`#${layer}`).off('click').click(()=>slideshow('slideStart', 'adv'))
+				$(`#${layer}`).off('click').click(()=>slideshow('slideStart', 'adv', slideSource, flickr))
 			} else if (actionActions[i].reverse){ // slides only
-				$(`#${layer}`).off('click').click(()=>slideshow('slideStart', 'rev'))
+				$(`#${layer}`).off('click').click(()=>slideshow('slideStart', 'rev', slideSource, flickr))
 			}
 		})
 
@@ -194,11 +239,15 @@ const altActions = function(objId){
 }
 
 
-
-const slideshow = function(objId, direction){
-	var arr = menuBottom[objId].photos.img
-	var texts = menuBottom[objId].photos.captions
-	var modals = menuBottom[objId].photos.modals
+const slideshow = function(objId, direction, type, flickr){
+	if (type==='internal' && flickr===null){
+		var arr = menuBottom[objId].photos.img
+		var modals = menuBottom[objId].photos.modals
+	} else if(type==='flickr' && flickr!==null){
+		var arr = flickr.map(item=>item.link)
+		var height = flickr.map(item=>item.height)
+		var modals = flickr.map(item=>item.title)
+	}
 	var current;
 	var next;
 
@@ -215,11 +264,15 @@ const slideshow = function(objId, direction){
 			if (next< 0){next = arr.length-1}
 		}
 
-
-		$('#slideImage2').attr('xlink:href', arr[next]).show()
+		if (height){
+			$('#slideImage2').attr('xlink:href', arr[next]).attr('height', height[next]).show()
+		} else {
+			$('#slideImage2').attr('xlink:href', arr[next]).attr('height', 900).show()
+		}
 		$('#slideImage1').fadeOut(1000)
 
-		$('#rightModalBody').text('in advance of text: '+ modals[next])
+		$('#rightModalLabel').text(modals[next])
+		$('#rightModalBody').text('')
 		$('#rightModal').modal('show')
 
 	} else if (sl1 ==='display: none;'){
@@ -233,8 +286,13 @@ const slideshow = function(objId, direction){
 			if (next< 0){next = arr.length-1}
 		}
 
-		$('#slideImage1').attr('xlink:href', arr[next]).fadeIn(1000)
-		$('#rightModalBody').text('in advance of text: '+modals[next])
+		if (height){
+			$('#slideImage1').attr('xlink:href', arr[next]).attr('height', height[next]).fadeIn(1000)
+		} else {
+			$('#slideImage1').attr('xlink:href', arr[next]).attr('height', 900).fadeIn(1000)
+		}
+		$('#slideImage2').fadeOut(1000)
+		$('#rightModalLabel').text(modals[next])
 		$('#rightModal').modal('show')
 	}
 }
@@ -341,13 +399,15 @@ const altIsolate=function(objId){
 	if (menuBottom[objId].isolate){
 		var iso = menuBottom[objId].isolate
 
-		iso.layers.forEach((layer,i)=>{
-			$(`#${layer}`).hover(()=>{
-				iso.affected[i].forEach(item=>$(`#${item}`).fadeOut(iso.duration))
-			}, ()=>{
-				iso.affected[i].forEach(item=>$(`#${item}`).fadeIn(iso.duration))
-			})
-		})
+		$(`#${iso.trigger}`).off('click').click(()=>{
+			$(`#${iso.layers}`).fadeToggle()
+		})//.off('mouseover')
+
+	}
+}
+
+const altHighlight = function(objId){
+	if (menuBottom[objId].highlight){
 
 	}
 }
@@ -355,16 +415,17 @@ const altIsolate=function(objId){
 
 
 //-----------master function for tiggering & adding events from the bottom menu----------------
-const layerOptions = function(objId){ //event.target.id
+const layerOptions = function(objId, flickr){ //event.target.id
 	console.log(objId)
 	altVisibility(objId)
 	altContent(objId, null)
-	altActions(objId)
+	altActions(objId, flickr)
 	altShow(objId)
 	altPositions(objId)
 	altAnimateClip(objId)
 	altTooltips(objId)
 	altIsolate(objId)
+	altHighlight(objId)
 }
 
 
